@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>塑料价格变动监控与提醒工具 | 产品设计方案</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text2: #64748b;
+    --blue: #3b82f6;
+    --blue2: #2563eb;
+    --green: #10b981;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --border: #e2e8f0;
+    --radius: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* Hero */
+  .hero { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 80px 0 60px; text-align: center; position: relative; overflow: hidden; }
+  .hero::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 30% 50%, rgba(59,130,246,.15) 0%, transparent 60%); pointer-events: none; }
+  .hero h1 { font-size: 48px; font-weight: 800; letter-spacing: -1px; position: relative; z-index: 1; }
+  .hero h2 { font-size: 20px; font-weight: 400; color: #94a3b8; margin-top: 12px; position: relative; z-index: 1; }
+  .hero .badge { display: inline-block; background: rgba(59,130,246,.2); border: 1px solid rgba(59,130,246,.3); color: #60a5fa; padding: 6px 16px; border-radius: 20px; font-size: 14px; margin-bottom: 24px; position: relative; z-index: 1; }
+
+  .stats-bar { background: white; border-bottom: 1px solid var(--border); padding: 32px 0; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; text-align: center; }
+  .stat-value { font-size: 36px; font-weight: 800; line-height: 1.1; }
+  .stat-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .stat-value.blue { color: var(--blue); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.amber { color: var(--amber); }
+
+  .section { padding: 64px 0; }
+  .section-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -.5px; }
+  .section-subtitle { font-size: 16px; color: var(--text2); margin-bottom: 40px; }
+
+  .pain-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+  .pain-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; transition: all .3s; }
+  .pain-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .pain-icon { font-size: 32px; margin-bottom: 12px; }
+  .pain-card h3 { font-size: 17px; margin-bottom: 8px; }
+  .pain-card p { font-size: 14px; color: var(--text2); }
+
+  .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .compare-box { border-radius: var(--radius); padding: 32px; }
+  .compare-box.before { background: #fef2f2; border: 2px solid #fecaca; }
+  .compare-box.after { background: #f0fdf4; border: 2px solid #bbf7d0; }
+  .compare-box h3 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .compare-box ul { list-style: none; }
+  .compare-box li { font-size: 14px; padding: 6px 0; }
+  .compare-box li::before { margin-right: 8px; }
+  .before li::before { content: '✗ '; color: #ef4444; font-weight: bold; }
+  .after li::before { content: '✓ '; color: #10b981; font-weight: bold; }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; text-align: center; transition: .3s; }
+  .feature-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .feature-icon { font-size: 40px; margin-bottom: 16px; }
+  .feature-card h3 { font-size: 16px; margin-bottom: 8px; }
+  .feature-card p { font-size: 13px; color: var(--text2); }
+
+  .flow-container { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; padding: 20px 0; }
+  .flow-step { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 20px 24px; text-align: center; min-width: 120px; }
+  .flow-step.active { border-color: var(--blue); background: #eff6ff; }
+  .flow-arrow { font-size: 24px; color: var(--text2); margin: 0 8px; }
+  .flow-step .icon { font-size: 28px; margin-bottom: 8px; }
+  .flow-step .title { font-size: 14px; font-weight: 600; }
+  .flow-step .desc { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  .persona-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .persona-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; text-align: center; transition: .3s; }
+  .persona-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .persona-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; }
+  .persona-avatar.a { background: #eff6ff; }
+  .persona-avatar.b { background: #fef3c7; }
+  .persona-avatar.c { background: #fce7f3; }
+  .persona-card h3 { font-size: 16px; margin-bottom: 4px; }
+  .persona-card .role { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+  .persona-card .quote { font-size: 13px; font-style: italic; color: var(--text2); background: var(--bg); padding: 12px; border-radius: 8px; }
+
+  /* Next steps summary */
+  .next-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .next-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+  .next-card .label { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block; margin-bottom: 12px; }
+  .next-card .label.soon { background: #dbeafe; color: #1d4ed8; }
+  .next-card .label.mid { background: #d1fae5; color: #059669; }
+  .next-card .label.later { background: #f3e8ff; color: #7c3aed; }
+  .next-card h4 { font-size: 15px; margin-bottom: 8px; }
+  .next-card p { font-size: 13px; color: var(--text2); }
+
+  /* Transfer grid */
+  .transfer-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+  .transfer-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; text-align: center; transition: .3s; }
+  .transfer-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .transfer-card .icon { font-size: 36px; margin-bottom: 12px; }
+  .transfer-card h4 { font-size: 15px; margin-bottom: 6px; }
+  .transfer-card p { font-size: 12px; color: var(--text2); }
+
+  .cta { background: linear-gradient(135deg, var(--blue), var(--blue2)); color: white; padding: 64px 0; text-align: center; border-radius: var(--radius); margin: 0 24px 64px; }
+  .cta h2 { font-size: 32px; margin-bottom: 16px; }
+  .cta p { color: #bfdbfe; margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .cta .btn { display: inline-block; background: white; color: var(--blue); padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; text-decoration: none; transition: .3s; }
+  .cta .btn:hover { transform: scale(1.05); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate { animation: fadeUp .6s ease-out both; }
+  .animate.d1 { animation-delay: .1s; }
+  .animate.d2 { animation-delay: .2s; }
+  .animate.d3 { animation-delay: .3s; }
+  .animate.d4 { animation-delay: .4s; }
+
+  @keyframes flash {
+    0%, 100% { background: transparent; }
+    50% { background: #fef2f2; }
+  }
+  .price-ticker { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+  .price-item { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 16px 24px; text-align: center; min-width: 140px; }
+  .price-item .name { font-size: 13px; color: #94a3b8; }
+  .price-item .price { font-size: 24px; font-weight: 700; margin: 4px 0; }
+  .price-item .change { font-size: 13px; }
+  .price-item .change.up { color: #f87171; }
+  .price-item .change.down { color: #4ade80; }
+
+  @media (max-width: 768px) {
+    .stats-grid, .pain-grid, .feature-grid, .persona-grid, .compare-row, .next-steps, .transfer-grid { grid-template-columns: 1fr; }
+    .flow-container { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+    .hero h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <span class="badge animate">产品实习求职 · 个人项目展示</span>
+    <h1 class="animate d1">坐在电脑前盯价？<br>把重复劳动交给自动化</h1>
+    <h2 class="animate d2">自动抓取塑料交易网站价格 · 规则触发涨跌提醒 · 每天省下至少6小时</h2>
+    <div class="price-ticker animate d3">
+      <div class="price-item" style="animation: flash 2s infinite;">
+        <div class="name">ABS 奇美 PA-757</div>
+        <div class="price">¥12,500</div>
+        <div class="change down">↓ -2.3%</div>
+      </div>
+      <div class="price-item">
+        <div class="name">PP 台化 K8003</div>
+        <div class="price">¥8,860</div>
+        <div class="change up">↑ +1.1%</div>
+      </div>
+      <div class="price-item">
+        <div class="name">PC 科思创 2805</div>
+        <div class="price">¥18,200</div>
+        <div class="change down">↓ -3.1%</div>
+      </div>
+      <div class="price-item" style="animation: flash 2s infinite 1s;">
+        <div class="name">HDPE 独山子 8008</div>
+        <div class="price">¥7,420</div>
+        <div class="change up">↑ +0.8%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-bar">
+  <div class="container stats-grid">
+    <div>
+      <div class="stat-value red">≥6h</div>
+      <div class="stat-label">贸易商每天花在<br>手动盯价上的时间</div>
+    </div>
+    <div>
+      <div class="stat-value blue">1.2万+</div>
+      <div class="stat-label">仅五大专业市场已知<br>个体户/小商户数量</div>
+    </div>
+    <div>
+      <div class="stat-value amber">80%</div>
+      <div class="stat-label">樟木头塑胶市场主体<br>为个体户和家庭式小公司</div>
+    </div>
+    <div>
+      <div class="stat-value green">8项</div>
+      <div class="stat-label">核心功能已完成<br>Vercel部署在线运行</div>
+    </div>
+  </div>
+</section>
+
+<!-- THE PAIN -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title animate">当前现状：一场不能离开屏幕的消耗战</h2>
+    <p class="section-subtitle animate">贸易商每天花至少6小时重复刷新网站页面——不是在"做交易"，而是在"盯价格"</p>
+    <div class="pain-grid">
+      <div class="pain-card animate d1">
+        <div class="pain-icon">🖥️</div>
+        <h3>多网站反复刷新</h3>
+        <p>每天至少6小时，在普拉司、万塑达、中塑在线等多个网站之间反复刷新页面，手动对比几十个品类的价格。</p>
+      </div>
+      <div class="pain-card animate d2">
+        <div class="pain-icon">📱</div>
+        <h3>离开电脑就失控</h3>
+        <p>外出见客户、吃饭、休息时用手机查看十分不便，不知道价格的实时变化。必须"人在电脑前"才能做好生意。</p>
+      </div>
+      <div class="pain-card animate d3">
+        <div class="pain-icon">⚖️</div>
+        <h3>跨平台比价低效</h3>
+        <p>同一个品类在不同交易网站上的价格和库存可能不同，需要手动开多个标签页比对，耗时且易出错。</p>
+      </div>
+      <div class="pain-card animate d4">
+        <div class="pain-icon">📝</div>
+        <h3>经验难以积累</h3>
+        <p>交易网站的历史价格记录功能简陋，全凭记忆判断趋势。对新手不友好，老手也容易误判。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section class="section" style="background: white;">
+  <div class="container">
+    <h2 class="section-title">有了自动化工具之后</h2>
+    <p class="section-subtitle">从"盯价至少6小时"到"收到提醒 → 做决策 → 继续做自己的事"</p>
+    <div class="compare-row">
+      <div class="compare-box before animate">
+        <h3>没有自动化工具</h3>
+        <ul>
+          <li>手动刷新普拉司、万塑达、中塑在线多个网站</li>
+          <li>每天至少6小时坐在电脑前</li>
+          <li>凭直觉和记忆判断趋势</li>
+          <li>离开电脑就不知道价格变化</li>
+          <li>跨平台比价耗时且易出错</li>
+        </ul>
+      </div>
+      <div class="compare-box after animate d2">
+        <h3>有了自动化工具</h3>
+        <ul>
+          <li>系统自动抓取多个网站价格，无需手动刷新</li>
+          <li>只在价格变动超过设定阈值时收到提醒</li>
+          <li>设定好规则后安心做自己的事</li>
+          <li>手机也能查看核心数据</li>
+          <li>把时间还给跑客户和做决策</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">产品工作流程</h2>
+    <p class="section-subtitle">一条完整的自动化闭环</p>
+    <div class="flow-container">
+      <div class="flow-step active animate">
+        <div class="icon">🏪</div>
+        <div class="title">添加店铺</div>
+        <div class="desc">输入塑料交易网站URL</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active animate d1">
+        <div class="icon">🕷️</div>
+        <div class="title">自动抓取</div>
+        <div class="desc">爬取全站商品和价格</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active animate d2">
+        <div class="icon">🔍</div>
+        <div class="title">品类筛选</div>
+        <div class="desc">按品名/制造商筛选</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active animate d3">
+        <div class="icon">🎯</div>
+        <div class="title">设置阈值</div>
+        <div class="desc">自定义涨跌幅提醒</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step active animate d4">
+        <div class="icon">🔔</div>
+        <div class="title">变动提醒</div>
+        <div class="desc">网页端查看提醒</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" style="background: white;">
+  <div class="container">
+    <h2 class="section-title">已实现的8项核心功能</h2>
+    <p class="section-subtitle">当前已开发完成并部署上线</p>
+    <div class="feature-grid">
+      <div class="feature-card animate">
+        <div class="feature-icon">🕷️</div>
+        <h3>自动爬虫抓取</h3>
+        <p>自动抓取普拉司网全站商品和价格，多层容错机制，控制频率降低封禁风险</p>
+      </div>
+      <div class="feature-card animate d1">
+        <div class="feature-icon">🎯</div>
+        <h3>规则触发监控</h3>
+        <p>涨跌幅百分比/绝对值两种阈值模式，第N低价/第N高价/均价三种监控策略</p>
+      </div>
+      <div class="feature-card animate d2">
+        <div class="feature-icon">⏱️</div>
+        <h3>定时自动刷新</h3>
+        <p>自定义刷新频率（最快15分钟），到时间自动抓取最新价格，无需人工干预</p>
+      </div>
+      <div class="feature-card animate d3">
+        <div class="feature-icon">🔔</div>
+        <h3>价格变动提醒</h3>
+        <p>价格变动触发阈值时自动生成提醒，展示当前价/上次价/变动幅度</p>
+      </div>
+      <div class="feature-card animate d4">
+        <div class="feature-icon">🔍</div>
+        <h3>多维品类筛选</h3>
+        <p>按品名（ABS/PP/PC等）和制造商（奇美/台化/科思创等）双重筛选商品</p>
+      </div>
+      <div class="feature-card animate">
+        <div class="feature-icon">🏪</div>
+        <h3>多店铺管理</h3>
+        <p>添加多个塑料交易网站URL，自由切换，独立管理不同店铺的商品和监控</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USERS - matching docx personas -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">三类典型商户画像</h2>
+    <p class="section-subtitle">基于樟木头塑胶产业实地调研的观察</p>
+    <div class="persona-grid">
+      <div class="persona-card animate">
+        <div class="persona-avatar a">🪑</div>
+        <h3>老派坐商 · 15-20年</h3>
+        <div class="role">盯5-8种通用塑料，坐在电脑前一天至少6小时</div>
+        <div class="quote">"离不开电脑，出去了不方便知道价。"</div>
+        <p style="margin-top:12px;font-size:12px;color:var(--text2);">有兴趣但怕复杂，只用微信+浏览器</p>
+      </div>
+      <div class="persona-card animate d2">
+        <div class="persona-avatar b">🏃</div>
+        <h3>勤快跑商 · 5-10年</h3>
+        <div class="role">盯10-20种跨品类，用微信群+Excel辅助记录</div>
+        <div class="quote">"信息源太多了，验证价格真假花的时间最长。"</div>
+        <p style="margin-top:12px;font-size:12px;color:var(--text2);">最需要自动化，时间最宝贵</p>
+      </div>
+      <div class="persona-card animate d4">
+        <div class="persona-avatar c">🔄</div>
+        <h3>尝试转型者 · 3-8年</h3>
+        <div class="role">盯3-5种偏细分品类，尝试用工具辅助</div>
+        <div class="quote">"想用工具但不知道选什么，试了几次不好用就放弃了。"</div>
+        <p style="margin-top:12px;font-size:12px;color:var(--text2);">最愿意尝试，但要求简单好用</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPETITIVE -->
+<section class="section" style="background: white;">
+  <div class="container">
+    <h2 class="section-title">竞品对比：细分场景中的缺口</h2>
+    <p class="section-subtitle">当前没有一个产品同时做到塑料品类专属 + 自定义阈值 + 多平台抓取</p>
+
+    <table style="width:100%;border-collapse:collapse;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:14px;">
+      <thead>
+        <tr style="background:var(--bg);">
+          <th style="padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);">对比维度</th>
+          <th style="padding:12px 16px;text-align:center;border-bottom:1px solid var(--border);background:#eff6ff;color:var(--blue);font-weight:700;">本产品</th>
+          <th style="padding:12px 16px;text-align:center;border-bottom:1px solid var(--border);">微信群</th>
+          <th style="padding:12px 16px;text-align:center;border-bottom:1px solid var(--border);">Excel手工</th>
+          <th style="padding:12px 16px;text-align:center;border-bottom:1px solid var(--border);">Distill.io</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:10px 16px;border-bottom:1px solid var(--border);">自动抓取价格</td><td style="padding:10px 16px;text-align:center;background:#f0fdf4;border-bottom:1px solid var(--border);">✓</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✗</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✗</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">△</td></tr>
+        <tr><td style="padding:10px 16px;border-bottom:1px solid var(--border);">自定义阈值</td><td style="padding:10px 16px;text-align:center;background:#f0fdf4;border-bottom:1px solid var(--border);">✓</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✗</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✗</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✓</td></tr>
+        <tr><td style="padding:10px 16px;border-bottom:1px solid var(--border);">塑料品类深耕</td><td style="padding:10px 16px;text-align:center;background:#f0fdf4;border-bottom:1px solid var(--border);">✓</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">△</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✗</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✗</td></tr>
+        <tr><td style="padding:10px 16px;border-bottom:1px solid var(--border);">多平台数据</td><td style="padding:10px 16px;text-align:center;background:#f0fdf4;border-bottom:1px solid var(--border);">✓</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✓</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">△</td><td style="padding:10px 16px;text-align:center;border-bottom:1px solid var(--border);">✓</td></tr>
+        <tr><td style="padding:10px 16px;">定时刷新</td><td style="padding:10px 16px;text-align:center;background:#f0fdf4;">✓</td><td style="padding:10px 16px;text-align:center;">✗</td><td style="padding:10px 16px;text-align:center;">✗</td><td style="padding:10px 16px;text-align:center;">✓</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--text2);">△ = 部分支持但不完善  |  ✓ 绿底为本产品已有能力</p>
+  </div>
+</section>
+
+<!-- CURRENT PROGRESS -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">当前进度与下一步计划</h2>
+    <p class="section-subtitle">8项核心功能已上线，近期重点在数据稳定性和用户系统</p>
+    <div class="next-steps">
+      <div class="next-card animate">
+        <span class="label soon">已完成</span>
+        <h4>核心监控闭环</h4>
+        <p>爬虫抓取 → 品类筛选 → 阈值监控 → 定时刷新 → 变动提醒，全链路已跑通并部署上线</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--blue);">
+          <a href="https://plastic-price-monitoring-platform.vercel.app/" target="_blank" style="color:var(--blue);">在线体验 →</a>
+        </p>
+      </div>
+      <div class="next-card animate d2">
+        <span class="label mid">近期 1-4周</span>
+        <h4>稳定性和用户系统</h4>
+        <p>爬虫成功率提升至95%以上；接入用户注册登录系统，实现数据按用户隔离</p>
+      </div>
+      <div class="next-card animate d4">
+        <span class="label later">中期及远期</span>
+        <h4>多平台与移动化</h4>
+        <p>接入万塑达、中塑在线等更多数据源；移动端适配；探索微信消息推送和历史趋势图</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSFER SKILLS -->
+<section class="section" style="background: white;">
+  <div class="container">
+    <h2 class="section-title">跨学科：从城市规划到产品设计的思维迁移</h2>
+    <p class="section-subtitle">我不是技术背景，但我有结构化思考和解决复杂问题的训练</p>
+    <div class="transfer-grid">
+      <div class="transfer-card animate">
+        <div class="icon">🔍</div>
+        <h4>调研与问题定义</h4>
+        <p>城市规划课的樟木头案例研究 → 发现"坐商盯价"真实痛点 → 定义了产品要解决的核心问题</p>
+      </div>
+      <div class="transfer-card animate d2">
+        <div class="icon">🧩</div>
+        <h4>系统思维</h4>
+        <p>用路径依赖/路径创造理论框架分析商户困境 → 识别出自动化盯价是打破"路径锁定"的干预点</p>
+      </div>
+      <div class="transfer-card animate d4">
+        <div class="icon">📐</div>
+        <h4>方案设计与落地</h4>
+        <p>借助AI编程工具，将产品构想转化为可运行的Web应用，4周完成从零到部署上线</p>
+      </div>
+    </div>
+    <div class="compare-row" style="margin-top:32px;">
+      <div class="compare-box before animate">
+        <h3>城乡规划</h3>
+        <ul>
+          <li>调研访谈：走访居民和商户</li>
+          <li>系统分析：城市是一个复杂系统</li>
+          <li>方案比选：多方案评估优劣</li>
+          <li>落地推动：从规划到实施</li>
+        </ul>
+      </div>
+      <div class="compare-box after animate d2">
+        <h3>产品设计</h3>
+        <ul>
+          <li>用户研究：访谈贸易商理解需求</li>
+          <li>问题拆解：从痛点出发定义功能</li>
+          <li>方案设计：PRD+竞品分析+路线图</li>
+          <li>快速验证：AI编程协助实现MVP</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta animate">
+  <h2>想了解更多？</h2>
+  <p>完整的产品设计方案、PRD文档、市场分析报告均已整理。线上产品可实际体验。</p>
+  <a href="https://plastic-price-monitoring-platform.vercel.app/" class="btn" target="_blank">在线体验产品 →</a>
+  <p style="margin-top:16px;font-size:13px;color:#93c5fd;">配套文档：产品设计方案 · PRD · 市场分析报告</p>
+</section>
+
+</body>
+</html>
